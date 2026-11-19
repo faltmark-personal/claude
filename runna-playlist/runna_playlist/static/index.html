@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Runna → YouTube Music playlist</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1>Workout playlist <span class="sub">Runna → YouTube Music → Garmin</span></h1>
+  <nav>
+    <button data-tab="workout" class="active">1. Workout</button>
+    <button data-tab="playlist">2. Playlist</button>
+    <button data-tab="library">Library &amp; BPM</button>
+    <button data-tab="settings">Settings</button>
+    <button data-tab="garmin">On your watch</button>
+  </nav>
+  <div id="mode-pill" class="pill"></div>
+</header>
+<div id="toast" hidden></div>
+<main>
+
+<section id="tab-workout" class="tab active">
+  <div class="grid2">
+    <div class="card">
+      <h2>Enter the workout</h2>
+      <p class="hint">Copy the session from Runna. Each step needs a duration (or distance + pace) and a heart-rate zone.</p>
+      <label>Name <input id="w-name" value="Threshold intervals"></label>
+      <label>Quick entry
+        <textarea id="w-spec" rows="3" spellcheck="false">Warm up: 10m@Z2, 5x(Rep: 4m@Z4, Recovery: 90s@Z1), Cool down: 8m@Z1</textarea>
+      </label>
+      <p class="hint">Format: <code>Name: 10m@Z2</code>, distance <code>1km@4:40/km@Z4</code>, repeats <code>5x( … )</code>. Separate steps with commas.</p>
+      <div class="row">
+        <button id="w-parse" class="primary">Use this</button>
+        <select id="w-examples"><option value="">Examples…</option></select>
+      </div>
+    </div>
+    <div class="card">
+      <h2>…or import</h2>
+      <label>Garmin FIT workout file
+        <input type="file" id="w-fit" accept=".fit,.FIT">
+      </label>
+      <p class="hint">A structured workout file from Garmin Connect, TrainingPeaks, Intervals.icu and similar tools.</p>
+      <div id="intervals-box">
+        <h3>Intervals.icu</h3>
+        <div id="intervals-body" class="hint">Add your personal API key in Settings to list planned runs.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row between">
+      <h2 id="w-title">Segments</h2>
+      <div class="muted" id="w-total"></div>
+    </div>
+    <div id="w-profile" class="profile"></div>
+    <table class="seg-table">
+      <thead><tr><th>#</th><th>Step</th><th>Duration</th><th>Zone</th><th>Type</th><th></th></tr></thead>
+      <tbody id="w-rows"></tbody>
+    </table>
+    <div class="row">
+      <button id="w-add">+ Add step</button>
+      <span class="spacer"></span>
+      <button id="w-generate" class="primary big">Generate playlist →</button>
+    </div>
+    <div id="w-blocks-note" class="hint"></div>
+  </div>
+</section>
+
+<section id="tab-playlist" class="tab">
+  <div id="p-empty" class="card">Generate a playlist from the Workout tab first.</div>
+  <div id="p-body" hidden>
+    <div class="card">
+      <div class="row between">
+        <h2 id="p-title"></h2>
+        <div class="row">
+          <button id="p-regen" title="New picks; locked songs stay">↻ Regenerate</button>
+          <button id="p-csv">Export CSV</button>
+        </div>
+      </div>
+      <div id="p-summary" class="stats"></div>
+      <div id="p-timeline" class="timeline"></div>
+      <div class="legend">
+        <span><i class="z1"></i>Z1</span><span><i class="z2"></i>Z2</span><span><i class="z3"></i>Z3</span>
+        <span><i class="z4"></i>Z4</span><span><i class="z5"></i>Z5</span><span><i class="off"></i>song outside tempo range</span>
+      </div>
+    </div>
+    <div class="card">
+      <table class="pl-table">
+        <thead><tr><th>#</th><th>Starts</th><th>Song</th><th>Length</th><th>BPM</th><th>Segment</th><th>From</th><th></th></tr></thead>
+        <tbody id="p-rows"></tbody>
+      </table>
+      <div class="row"><button id="p-add">+ Add a song</button></div>
+    </div>
+    <div class="card">
+      <h3>Timing</h3>
+      <p class="hint">Songs play whole, so music changes land near, not exactly on, segment boundaries.
+        Positive offset = the new music starts late; negative = early.</p>
+      <table class="timing-table"><thead><tr><th>Segment</th><th>Zone</th><th>Workout time</th><th>Music starts</th><th>Offset</th><th>Songs</th></tr></thead>
+        <tbody id="p-timing"></tbody></table>
+    </div>
+    <div class="card save-card">
+      <h2>Save to YouTube Music</h2>
+      <div class="row">
+        <label class="grow">Playlist name <input id="p-name"></label>
+        <button id="p-save" class="primary big">Save playlist</button>
+      </div>
+      <p class="hint" id="p-save-hint"></p>
+      <div id="p-saved"></div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-library" class="tab">
+  <div class="card">
+    <div class="row between">
+      <h2>Your liked songs</h2>
+      <div class="row">
+        <button id="l-sync" class="primary">Sync liked songs &amp; look up BPM</button>
+        <button id="l-retry" title="Look up tempos again for songs still unknown">Retry unknown BPMs</button>
+      </div>
+    </div>
+    <div id="l-progress" class="hint"></div>
+    <div id="l-coverage" class="coverage"></div>
+    <p class="hint">Tempos come from your own entries first, then Deezer's catalogue (free; many songs are missing),
+      then GetSongBPM if you set an API key, then optional analysis of a 30-second preview. Published tempos can be off by half or double;
+      with half/double matching on, that usually doesn't matter. Songs with unknown BPM are never used. Type a BPM in to fix or add one.</p>
+    <div class="row">
+      <input id="l-filter" placeholder="Filter by title or artist">
+      <label class="inline"><input type="checkbox" id="l-unknown"> only unknown BPM</label>
+      <span class="muted" id="l-count"></span>
+    </div>
+    <table class="lib-table"><thead><tr><th>Song</th><th>Length</th><th>BPM</th><th>Source</th><th>Fits zones</th></tr></thead>
+      <tbody id="l-rows"></tbody></table>
+  </div>
+</section>
+
+<section id="tab-settings" class="tab">
+  <div class="card">
+    <h2>Music account</h2>
+    <div class="modes">
+      <label class="mode"><input type="radio" name="mode" value="demo"> <b>Demo library</b>
+        <span>Made-up songs, no account. Try the app before connecting anything.</span></label>
+      <label class="mode"><input type="radio" name="mode" value="youtube_data"> <b>YouTube (official API)</b> <em class="tag ok">official</em>
+        <span>Google sign-in. Reads your liked videos (music only), saves playlists. Daily quota: about 6 saved workout playlists per day.</span></label>
+      <label class="mode"><input type="radio" name="mode" value="ytmusic"> <b>ytmusicapi</b> <em class="tag warn">unofficial</em>
+        <span>Uses your browser session to read YouTube Music likes directly, adds song-radio recommendations, no quota. Not supported by Google; may break or be against YouTube's terms.</span></label>
+    </div>
+    <div id="s-google" class="setup">
+      <h3>Official mode setup</h3>
+      <ol class="hint">
+        <li>In Google Cloud Console create a project, enable <b>YouTube Data API v3</b>, configure the OAuth consent screen (External, add yourself as a test user).</li>
+        <li>Create an OAuth client ID of type <b>Web application</b> with redirect URI <code id="s-redirect"></code>, then download its JSON.</li>
+        <li>Upload it here, then connect.</li>
+      </ol>
+      <div class="row"><input type="file" id="s-google-file" accept=".json"><button id="s-google-connect" class="primary">Connect Google account</button><button id="s-google-disc">Disconnect</button></div>
+      <div id="s-google-status" class="hint"></div>
+    </div>
+    <div id="s-ytm" class="setup">
+      <h3>ytmusicapi setup</h3>
+      <ol class="hint">
+        <li>Install the extra: <code>pip install '.[ytmusic]'</code></li>
+        <li>Open <a href="https://music.youtube.com" target="_blank" rel="noopener">music.youtube.com</a> signed in, open developer tools → Network, click any request to <code>browse</code>, and copy its <b>request headers</b> (Firefox: "Copy request headers"; Chrome: view source of Request Headers).</li>
+        <li>Paste them here. They act like a password. They're stored only in your local data folder.</li>
+      </ol>
+      <textarea id="s-ytm-headers" rows="4" placeholder="accept: */* …&#10;cookie: …"></textarea>
+      <div class="row"><button id="s-ytm-save" class="primary">Save &amp; use ytmusicapi</button><button id="s-ytm-disc">Disconnect</button></div>
+      <div id="s-ytm-status" class="hint"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Tempo for each heart-rate zone</h2>
+    <p class="hint">Music BPM isn't meant to equal your heart rate. These ranges set how energetic each effort's music feels.
+      Hard zones sit around your running cadence, so you can step in time if you like.</p>
+    <div class="row">
+      <label class="inline">Cadence <input id="s-cadence" type="number" min="120" max="220" class="num"> steps/min</label>
+      <button id="s-derive">Set ranges from cadence</button>
+      <label class="inline"><input type="checkbox" id="s-halfdouble"> Also match half/double time (82 BPM counts as 164)</label>
+    </div>
+    <table class="zone-table"><thead><tr><th>Zone</th><th>Effort</th><th>Min BPM</th><th>Max BPM</th></tr></thead><tbody id="s-zones"></tbody></table>
+  </div>
+
+  <div class="card">
+    <h2>Planning</h2>
+    <div class="form-grid">
+      <label>Merge steps shorter than <span><input id="s-minblock" type="number" class="num" min="30" max="600"> s</span></label>
+      <label>Merged steps use <select id="s-merge"><option value="weighted">time-weighted zone</option><option value="max">hardest zone</option></select></label>
+      <label>Boundary tolerance <span><input id="s-slack" type="number" class="num" min="5" max="120"> s</span></label>
+      <label class="inline"><input type="checkbox" id="s-recs"> Recommend songs when liked songs run short</label>
+      <label class="inline"><input type="checkbox" id="s-preview"> Estimate unknown BPMs from previews (needs <code>[analysis]</code> extra)</label>
+      <label>Default playlist name <input id="s-title"></label>
+      <label class="inline"><input type="checkbox" id="s-reuse"> Refill the same playlist each time (watch keeps it selected)</label>
+      <label>Privacy <select id="s-privacy"><option>PRIVATE</option><option>UNLISTED</option><option>PUBLIC</option></select></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Workout import</h2>
+    <div class="form-grid">
+      <label>Max heart rate <span><input id="s-maxhr" type="number" class="num" min="120" max="230"> bpm</span></label>
+      <label>Easy pace <input id="s-easy" class="num" placeholder="6:00/km"></label>
+      <label>Hard pace <input id="s-hard" class="num" placeholder="4:50/km"></label>
+    </div>
+    <p class="hint">Used for imported steps that give a custom heart-rate range or a distance without a pace (zones follow Garmin's default % of max HR).</p>
+    <h3>Intervals.icu</h3>
+    <div class="row"><input id="s-intervals" type="password" placeholder="Personal API key (Settings → Developer Settings on intervals.icu)" class="grow"><button id="s-intervals-save">Save key</button></div>
+    <div id="s-intervals-status" class="hint"></div>
+  </div>
+  <div class="row"><button id="s-save" class="primary big">Save settings</button></div>
+</section>
+
+<section id="tab-garmin" class="tab">
+  <div class="card prose">
+    <h2>Getting the playlist onto your Fenix 8 Pro</h2>
+    <p>This app <b>creates the playlist in your YouTube Music account</b>. Downloading it to the watch happens in Garmin's YouTube Music watch app.
+      Nothing here can push music to the watch directly.</p>
+    <ol>
+      <li><b>Once:</b> install <b>YouTube Music</b> from the Connect IQ Store on your phone and sign in on the watch with the code it shows.
+        Use your personal Google account (Brand Accounts aren't supported). This needs YouTube Music Premium, which you have.</li>
+      <li>Save the playlist from the Playlist tab. With "refill the same playlist" on, it keeps the same name and ID every time.</li>
+      <li>On the watch, open the YouTube Music app → <i>Add music</i> / library → pick the playlist (only needed the first time if you reuse it).</li>
+      <li>Put the watch on Wi-Fi (on its charger is easiest) and let it sync. Downloads only happen over Wi-Fi.</li>
+      <li>Before the run: pair your Bluetooth headphones, open the music controls, choose the playlist and <b>turn shuffle off</b> so songs play in workout order.</li>
+      <li>Start the music and the workout at the same moment. If you pause the workout, pause the music too, or the two clocks drift apart.</li>
+    </ol>
+    <h3>Things to know</h3>
+    <ul>
+      <li>Songs play whole. There's no trimming, crossfading or timed switching on the watch, so music changes land near boundaries (see the Timing table).</li>
+      <li>Very short intervals are grouped together and share one tempo.</li>
+      <li>Distance-based steps are converted to time at the planned pace. If you run faster or slower, the music drifts.</li>
+      <li>The playlist is prepared before the run. It doesn't react to your live heart rate.</li>
+      <li>Check the playlist order on the watch the first time. If the watch reorders it, tell me and we'll work around it.</li>
+    </ul>
+    <h3>If saving doesn't work</h3>
+    <p>Use <b>Export CSV</b>. It has a YouTube Music link for every song, so you can build the playlist by hand in the app and then download it the same way.</p>
+  </div>
+</section>
+</main>
+
+<dialog id="dlg">
+  <form method="dialog" class="dlg-inner">
+    <div class="row between"><h3 id="dlg-title"></h3><button value="close" aria-label="Close">✕</button></div>
+    <div id="dlg-body"></div>
+  </form>
+</dialog>
+<script src="/static/app.js"></script>
+</body>
+</html>

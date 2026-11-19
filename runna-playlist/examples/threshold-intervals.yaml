@@ -1,0 +1,11 @@
+# A Runna-style threshold session, entered by hand.
+# Load it in the web app by pasting the quick-entry line below, or POST it to /api/workout/parse.
+# Quick entry: Warm up: 10m@Z2, 5x(Rep: 4m@Z4, Recovery: 90s@Z1), Cool down: 8m@Z1
+name: Threshold intervals
+segments:
+  - {name: Warm up, duration: 10m, zone: 2}
+  - repeat: 5
+    segments:
+      - {name: Rep, duration: "4:00", zone: 4}
+      - {name: Recovery, duration: 90s, zone: 1}
+  - {name: Cool down, duration: 8m, zone: 1}

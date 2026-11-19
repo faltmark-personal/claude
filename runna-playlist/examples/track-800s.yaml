@@ -1,0 +1,9 @@
+# Distance-based reps (common in Runna plans) are converted to time at the given pace.
+name: 6 x 800 m
+segments:
+  - {name: Warm up, duration: 12m, zone: 2}
+  - repeat: 6
+    segments:
+      - {name: Rep, distance: 800m, pace: "4:20/km", zone: 5}
+      - {name: Jog, duration: 2m, zone: 1}
+  - {name: Cool down, duration: 10m, zone: 1}
