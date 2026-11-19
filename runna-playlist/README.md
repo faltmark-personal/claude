@@ -11,19 +11,32 @@ YouTube Music watch app.
 Workout ──► zones ──► BPM ranges ──► pick songs (liked first) ──► preview & edit ──► save to YouTube Music ──► download on watch
 ```
 
-## Quick start
+## Quick start (no terminal needed)
+
+1. Install **Python 3.10+** from [python.org](https://www.python.org/downloads/)
+   (on Windows, tick "Add python.exe to PATH").
+2. Download this folder (GitHub → Code → Download ZIP) and unzip it.
+3. Double-click the launcher:
+   - **Mac:** `Start Runna Playlist.command`. The first time, macOS may block it:
+     right-click → Open → Open.
+   - **Windows:** `Start Runna Playlist.bat`
+4. The first launch takes about a minute to install. Then your browser opens the app at
+   http://localhost:8765. Keep the small window open while you use it, and close it to stop.
+
+Everything else (entering workouts, connecting YouTube, previewing, editing, saving)
+happens in the browser. The app starts with a **demo library** of made-up songs, so you can
+try it before connecting anything. Settings, caches and tokens stay on your
+computer in `~/.runna-playlist`, and the app only listens to your own machine (127.0.0.1).
+
+<details><summary>Terminal alternative</summary>
 
 ```bash
 cd runna-playlist
-python -m venv .venv && source .venv/bin/activate
-pip install -e .                 # official mode + demo
-pip install -e '.[ytmusic]'      # optional: unofficial ytmusicapi mode
-runna-playlist                   # then open http://localhost:8765
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e '.[ytmusic]'
+runna-playlist            # opens http://localhost:8765
 ```
-
-It starts with a **demo library** of made-up songs, so you can try it without
-connecting anything. Settings, caches and tokens live in `~/.runna-playlist`
-(change with `--data-dir`). The server only listens on 127.0.0.1.
+</details>
 
 ## What's official and what isn't
 

@@ -249,10 +249,17 @@ def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description="Runna → YouTube Music workout playlist web app")
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--data-dir", help="where settings, caches and tokens are kept (default ~/.runna-playlist)")
+    ap.add_argument("--no-browser", action="store_true", help="don't open the browser automatically")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     state = AppState(args.data_dir, base_url=f"http://localhost:{args.port}")
-    print(f"\n  Open http://localhost:{args.port}\n")
+    url = f"http://localhost:{args.port}"
+    print(f"\n  Runna playlist is running at {url}\n  Leave this window open while you use it; close it to stop.\n")
+    if not args.no_browser:
+        import threading
+        import webbrowser
+
+        threading.Timer(1.5, webbrowser.open, args=(url,)).start()
     uvicorn.run(create_app(state), host="127.0.0.1", port=args.port, log_level="warning")
 
 
